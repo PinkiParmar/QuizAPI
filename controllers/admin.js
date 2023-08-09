@@ -1,6 +1,7 @@
 const { user, password } = require('../config');
 const con = require('../database');
 const { Encrypt } = require('../auth');
+const jwt = require('jsonwebtoken'); 
 
 getUserList = function (req, res) {
     const sql = "Select * from users";
@@ -124,4 +125,55 @@ postAddQuiz=function(req,res){
                 });
             }
           }
-module.exports ={getUserList,postLogin,getQuiz,postAddQuiz,getQuestions,postAddQuestions,postSignIn}
+        getTest = async (req, res) => {
+
+        const email = req.body.email;
+        console.log("email", email);
+        const sql = "SELECT * FROM users WHERE email ='" + email + "'";
+        console.log(sql);
+        await con.query(sql, (err, result_data) => {
+            console.log(result_data);
+            if (err) {
+                console.log(err);
+                res.json(err)
+            }else{
+                console.log("result", result_data);
+                res.json(result_data);
+            }
+        });
+    }
+
+    loginAPI = async (req, res) =>{
+        const {email, password } =req.body;
+        const testArray = [1, 2, 5, 7];
+        console.log("length", testArray.length);
+        if (email===undefined || password ===undefined) {
+            res.json({'code':400,'status':false,'message':'Email and Password must be provided.'});  
+            return false;
+        } else {
+            const sqlQuery = `SELECT * FROM users WHERE email ='${email}' AND password='${password}'`;
+            console.log(sqlQuery);
+            await con.query(sqlQuery, (err, results) => {
+                if (err) {
+                    console.log(err);
+                    res.json({'code':400,'status':false,'message':'There is something went wrong at server.'});
+                    return false;  
+                } else {
+                    console.log(results);
+                    console.log(results.length);
+                    if (results.length<1){
+                        res.json({'code':400,'status':false,'message':'Invalid Username or Password.'});
+                        return false
+                    } else if (results.length===1){
+                        const payload = results[0];
+                        const token = jwt.sign({payload}, 'mySecret', { expiresIn: 3000 });
+
+                        res.json({'code':200,'status':false,'message':'Logged in successfully.', 'data': {"token": token}});
+                        return true
+                    }
+
+                }
+            });
+        }
+    }
+module.exports ={getUserList,postLogin,getQuiz,postAddQuiz,getQuestions,postAddQuestions,postSignIn,getTest, loginAPI}
