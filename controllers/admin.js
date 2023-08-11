@@ -3,7 +3,7 @@ const con = require('../database');
 const { Encrypt } = require('../auth');
 const jwt = require('jsonwebtoken'); 
 
-getUserList = function (req, res) {
+getUserList = function (req, res) { // for testing purpose only
     const sql = "Select * from users";
     con.query(sql, function (err, result) {
         if (err) throw err;
@@ -11,37 +11,8 @@ getUserList = function (req, res) {
         res.json(result);
     });
 }
-postLogin = function (req, res){
-    console.log('req', req.body);
-    const email = req.body.email;
-    const password = req.body.password;
-    const sql = `SELECT * FROM users WHERE email ='${email}'`;
-    con.query(sql, async function (err, result_data) {
-        console.log(result_data, req.body.password, result_data[0]['password']);
-        if (err) {
-            console.log(err);
-            res.json(err)
-        }
-        if (result_data.length == 0) {
-            console.log("user not exist");
-            res.json({ 'code': 400, 'status': false, 'message': 'Email is incorrect.' })
-        } else {
-            const data = {
-                email: result_data[0]['email'],//???????????????????????????????????????
-                password: result_data[0]['password']
-            }
-            
-            console.log(data);
-            if (password==password){
-                res.json({ 'code': 200, 'status': true, 'message': 'User login successfully.'})
-            }
-            else{
-                res.json({ 'code': 400, 'status': false, 'message': 'Password is incorrect.'})
-            }
-        }
-    });
-}
-postSignIn=function(req, res){
+
+postSignIn=function(req, res){ //outdated login.
     console.log('req',req.body);
     const email = req.body.email;
     const password = req.body.password;
@@ -70,7 +41,9 @@ postSignIn=function(req, res){
         }
     })
 }
-getQuiz = function (req, res) {
+
+
+getQuiz =(req, res)=> {
     const sql = "Select * from quiz";
     con.query(sql, function (err, result) {
         if (err) throw err;
@@ -78,7 +51,9 @@ getQuiz = function (req, res) {
         res.json(result);
     });
 }
-postAddQuiz=function(req,res){
+
+
+postAddQuiz=(req,res)=>{
             let sql="INSERT INTO quiz (quiz_title,quiz_date,no_of_questions,passing_marks,each_question_marks, user_id) VALUES(?,?,?,?,?,?)";
             var values=[req.body.quiz_title,req.body.quiz_date,req.body.no_of_questions,req.body.passing_marks,req.body.each_question_marks, req.body.user_id];
             con.query(sql,values,function(err,result){
@@ -100,7 +75,9 @@ postAddQuiz=function(req,res){
                 });    
             }
         }
-          postAddQuestions=function(req,res){
+
+
+ postAddQuestions=function(req,res){
             const quiz_id = req.body.quiz_id;
            
             if (quiz_id== null || quiz_id==undefined){
@@ -125,6 +102,8 @@ postAddQuiz=function(req,res){
                 });
             }
           }
+
+
         getTest = async (req, res) => {
 
         const email = req.body.email;
@@ -142,33 +121,30 @@ postAddQuiz=function(req,res){
             }
         });
     }
+    
 
     loginAPI = async (req, res) =>{
         const {email, password } =req.body;
-        const testArray = [1, 2, 5, 7];
-        console.log("length", testArray.length);
         if (email===undefined || password ===undefined) {
             res.json({'code':400,'status':false,'message':'Email and Password must be provided.'});  
             return false;
         } else {
             const sqlQuery = `SELECT * FROM users WHERE email ='${email}' AND password='${password}'`;
-            console.log(sqlQuery);
             await con.query(sqlQuery, (err, results) => {
                 if (err) {
                     console.log(err);
                     res.json({'code':400,'status':false,'message':'There is something went wrong at server.'});
                     return false;  
+
+                    
                 } else {
-                    console.log(results);
-                    console.log(results.length);
                     if (results.length<1){
                         res.json({'code':400,'status':false,'message':'Invalid Username or Password.'});
                         return false
                     } else if (results.length===1){
                         const payload = results[0];
                         const token = jwt.sign({payload}, 'mySecret', { expiresIn: 3000 });
-
-                        res.json({'code':200,'status':false,'message':'Logged in successfully.', 'data': {"token": token}});
+                        res.json({'code':200,'status':false,'message':'Logged in successfully.', 'data': {"token": token, "role":payload.role}});
                         return true
                     }
 
@@ -176,4 +152,15 @@ postAddQuiz=function(req,res){
             });
         }
     }
-module.exports ={getUserList,postLogin,getQuiz,postAddQuiz,getQuestions,postAddQuestions,postSignIn,getTest, loginAPI}
+    
+    
+    getParticipantsList = function (req, res) {
+        const sql = "Select * from participants";
+        con.query(sql, function (err, result) {
+            if (err) throw err;
+            console.log("Result: " + JSON.stringify(result));
+            res.json(result);
+        });
+    }
+   
+module.exports ={getUserList,getQuiz,postAddQuiz,getQuestions,postAddQuestions,postSignIn,getTest, loginAPI,getParticipantsList}
